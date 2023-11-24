@@ -130,8 +130,8 @@ def transfer():
     sender_public_key, sender_private_key = generateECCKeys()
     receiver_public_key, receiver_private_key = generateECCKeys()
 
-    print(f'Sender pub add = {compress(sender_public_key)} and sender private key = {compress(sender_private_key)}')
-    print(f'Receiver pub add = {compress(receiver_public_key)} and Receiver private key = {compress(receiver_private_key)}')
+    # print(f'Sender pub add = {compress(sender_public_key)} and sender private key = {compress(sender_private_key)}')
+    # print(f'Receiver pub add = {compress(receiver_public_key)} and Receiver private key = {compress(receiver_private_key)}')
 
     symmetric_key = compress(sender_private_key * receiver_public_key)
     print("Symmetric Key is:", symmetric_key)
