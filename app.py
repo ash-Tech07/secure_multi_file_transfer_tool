@@ -52,6 +52,12 @@ def decrypt(files, symmetric_key=DEFAULT_KEY, processed_encrypted_files_path=PRO
 
     return decrypted_zip_file_name
 
+def clean_files():
+    folders = ['decrypted_files/', 'encrypted_files/', 'processed_encrypted_files/', 'processed_files/']
+    for folder in folders:
+        for file in os.listdir(folder):
+            os.remove(folder+file)
+
 def compress(pubKey):
     return hex(pubKey.x) + hex(pubKey.y % 2)[2:]
 
@@ -75,6 +81,8 @@ def uploadenc_page():
 
 @app.route('/uploadenc/', methods=['POST'])
 def upload_images():
+
+    clean_files()
     if 'file' not in request.files:
         flash('No file part')
         return redirect(request.url)
@@ -83,7 +91,8 @@ def upload_images():
     encrypted_file_name = encrypt(files)
 
     render_template('uploadenc.html', feedback="Encrypted files successfully!")
-    return send_file(encrypted_file_name, as_attachment=True)
+    
+    return send_file(encrypted_file_name, as_attachment=True) 
 
 
 # Decryption Routes
@@ -93,6 +102,8 @@ def uploaddec_page():
 
 @app.route('/uploaddec/', methods=['POST'])
 def upload_encrypted_files():
+    
+    clean_files()
     if 'file' not in request.files:
         flash('No file part')
         return redirect(request.url)
@@ -130,8 +141,8 @@ def transfer():
     sender_public_key, sender_private_key = generateECCKeys()
     receiver_public_key, receiver_private_key = generateECCKeys()
 
-    print(f'Sender pub add = {compress(sender_public_key)} and sender private key = {compress(sender_private_key)}')
-    print(f'Receiver pub add = {compress(receiver_public_key)} and Receiver private key = {compress(receiver_private_key)}')
+    print(f'Sender pub add = {sender_public_key} and sender private key = {sender_private_key}')
+    print(f'Receiver pub add = {receiver_public_key} and Receiver private key = {receiver_private_key}')
 
     symmetric_key = compress(sender_private_key * receiver_public_key)
     print("Symmetric Key is:", symmetric_key)
