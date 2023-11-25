@@ -2,6 +2,7 @@ import os
 import uuid
 from utils.encryption_utils import encrypt_file, encrypt_filename
 from utils.decryption_utils import decrypt_file
+from utils.rsa_utils import sign_util, verify_signature
 from utils.ecc_utils import generateECCKeys
 from utils.constant_utils import *
 from werkzeug.utils import secure_filename
@@ -133,39 +134,59 @@ def transfer():
 
     #init sender and receiver
     receiver_path, sender_path = AAKASH_PATH, ASHWIN_PATH
+    sender, receiver = "Ashwin", "Aakash"
     if request.form['user'] == "ashwin":
         receiver_path, sender_path = sender_path, receiver_path
+        sender, receiver = sender, receiver
     print(f'Sender Path = {sender_path} and receiver path = {receiver_path}')
 
     # genkeys
+    print(f"----------ECC Key Exchange------------")
     sender_public_key, sender_private_key = generateECCKeys()
     receiver_public_key, receiver_private_key = generateECCKeys()
 
-    print(f'Sender pub add = {sender_public_key} and sender private key = {sender_private_key}')
-    print(f'Receiver pub add = {receiver_public_key} and Receiver private key = {receiver_private_key}')
+    print(f'Sender pub add = {sender_public_key}\n and sender private key = {sender_private_key}')
+    print(f'Receiver pub add = {receiver_public_key}\n and Receiver private key = {receiver_private_key}')
 
     symmetric_key = compress(sender_private_key * receiver_public_key)
     print("Symmetric Key is:", symmetric_key)
+    print("------------ ECC key exchange completed! -------------")
 
-    # actual transfer
-
-    # encrypt
+    # Encryption of the files 
     encrypted_file_name = encrypt(files, symmetric_key=symmetric_key, upload_path=sender_path, encrypted_path=sender_path)
-    print("Encrypted file name is:", encrypted_file_name)
 
-    # transfer file
-    shutil.copy(encrypted_file_name, receiver_path)
+    #sign the message
+    print(encrypted_file_name)
+    with open(encrypted_file_name,"rb") as file1:
+        file_content = file1.read()
 
-    #decrypt
-    encrypted_file_name = receiver_path + encrypted_file_name.split('/')[-1]
-    print(f'after transfer encrypted file name is {encrypted_file_name}')
-    decrypt_file(encrypted_file_name, symmetric_key, process_encrypted_files_path=receiver_path)
+        hash, message = sign_util(sender, receiver, file_content)
 
-    #delete sender files
-    for file in os.listdir(sender_path):
-        os.remove(sender_path+file)
+        file1.write(message)
+        file_name = encrypted_file_name[0: encrypted_file_name.rfind("/")+1] + hash + '.txt'
+        os.rename(encrypted_file_name, file_name)
 
-    print("Transfer complete!")
+        # actual transfer
+        shutil.copy(file_name, receiver_path)
+
+        pause = input("File has been transfered succesfully, waiting for decryption!")
+
+        #decrypt
+        encrypted_file_name = receiver_path + os.listdir(receiver_path)[0]
+        print(f'After transfer encrypted file name is {encrypted_file_name}')
+
+        # verify the signature
+        file1 = open(encrypted_file_name,"w+")
+        isVerified = verify_signature(sender_public_key, receiver_private_key, file_name, file1.read())
+        if isVerified[0]:
+            file1.write(isVerified[1])
+            decrypt_file(file_name, symmetric_key, process_encrypted_files_path=receiver_path)
+
+    # #delete sender files
+    # for file in os.listdir(sender_path):
+    #     os.remove(sender_path+file)
+
+    # print("Transfer complete!")
 
     return render_template('transfer.html', feedback="Secure Transfer Successfull!")
 

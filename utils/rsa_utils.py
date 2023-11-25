@@ -109,37 +109,61 @@ def verify(receivedHashed, message):
         print(receivedHashed, " != ", ourHashed)
         
 
-def main():
-    p = int(input("Enter a prime number (17, 19, 23, etc): "))
-    q = int(input("Enter another prime number (Not one you entered above): "))   
-    #p = 17
-    #q=23
+def sign_util(sender, receiver, message):
+    # p = int(input("Enter a prime number (17, 19, 23, etc): "))
+    # q = int(input("Enter another prime number (Not one you entered above): "))   
+    p = 17
+    q = 23
     
-    
+    # DS start
+    print("----------Digit Signing Started!--------")
+    # Key Generation
     print("Generating your public/private keypairs now . . .")
-    public, private = generate_keypair(p, q)
-    
-    print("Your public key is ", public ," and your private key is ", private)
-    message = input("Enter a message to encrypt with your private key: ")
-    print("")
+    sender_public_key, sender_private_key = generate_keypair(p, q)    
+    print(f"{sender}'s public key is ", {sender_public_key} ," and private key is ", {sender_private_key})
 
+    receiver_public_key, receiver_private_key = generate_keypair(p, q)    
+    print(f"{receiver}'s public key is ", {receiver_public_key} ," and private key is ", {receiver_private_key})
+
+    # Hash of message
     hashed = hashFunction(message)
-    
-    print("Encrypting message with private key ", private ," . . .")
-    encrypted_msg = encrypt(private, hashed)   
-    print("Your encrypted hashed message is: ")
-    print(''.join(map(lambda x: str(x), encrypted_msg)))
-    #print(encrypted_msg)
-    
-    print("")
-    print("Decrypting message with public key ", public ," . . .")
+    print(f"The hash of the message: \n{message[10]}...\n is: {hashed}")
 
-    decrypted_msg = decrypt(public, encrypted_msg)
-    print("Your decrypted message is:")  
-    print(decrypted_msg)
+    # Encrypting the hash of message with sender's private key
+    encrypted_hash = encrypt(sender_private_key, hashed)
+    print(f"The encrypted hash is: \n{encrypted_hash}")
+
+    # Encrypting the message with receiver's public key
+    print(f"THe message is encrypted with {receiver}'s public key!")
+    encrypted_message = encrypt(receiver_public_key, message)
+
+    # Sending the message
+    print(f"Sending the message to {receiver}")
+
+    return (encrypted_hash, encrypted_message)
+
+
+def verify_signature(sender_public_key, receiver_private_key, hash, message):
+
+    # Decrypt the message using receivers private key
+    decrypted_message = decrypt(receiver_private_key, message)
+
+    #generate hash for the message
+    message_hash = hashFunction(decrypted_message)
+    print(f"The hash generated for decrypted message is: {message_hash}")
+
+    # Decrypt the received hash
+    decrypted_hash = decrypt(sender_public_key, hash)
+    print(f"The hash received is: {decrypted_hash}")
+
+    isVerified = True
+    # check for message integrity
+    if message_hash == decrypted_hash:
+        print(f"The message is verified successfully!")
+    else:
+        print("The message has been tampered!")
+        isVerified = False
     
-    print("")
-    print("Verification process . . .")
-    verify(decrypted_msg, message)
+    return [isVerified, decrypted_message]
+
    
-main()    
