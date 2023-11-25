@@ -1,5 +1,13 @@
 from tinyec import registry
 import secrets
+from Crypto.PublicKey import RSA
+
+def generate_RSA_keys():
+    key = RSA.generate(2048)  # Generate a new RSA key pair (2048-bit)
+    private_key = key.export_key()  # Export private key
+    public_key = key.publickey().export_key()  # Export public key
+    return private_key, public_key
+
 
 def compress(pubKey):
     return hex(pubKey.x) + hex(pubKey.y % 2)[2:]
