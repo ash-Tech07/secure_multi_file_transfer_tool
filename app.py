@@ -141,6 +141,7 @@ def transfer():
     sender_public_key, sender_private_key = generateECCKeys()
     receiver_public_key, receiver_private_key = generateECCKeys()
 
+
     print(f'Sender pub add = {sender_public_key} and sender private key = {sender_private_key}')
     print(f'Receiver pub add = {receiver_public_key} and Receiver private key = {receiver_private_key}')
 
